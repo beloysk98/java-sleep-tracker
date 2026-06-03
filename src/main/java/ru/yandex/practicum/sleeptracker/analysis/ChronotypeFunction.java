@@ -11,6 +11,8 @@ import java.util.stream.Collectors;
 
 public class ChronotypeFunction implements SleepAnalysisFunction {
 
+    private enum Chronotype { OWL, LARK, DOVE }
+
     @Override
     public SleepAnalysisResult apply(List<SleepingSession> sessions) {
         Map<Chronotype, Long> chronotypeCounts = sessions.stream()
@@ -65,5 +67,4 @@ public class ChronotypeFunction implements SleepAnalysisFunction {
         return Chronotype.DOVE;
     }
 
-    private enum Chronotype { OWL, LARK, DOVE }
 }
