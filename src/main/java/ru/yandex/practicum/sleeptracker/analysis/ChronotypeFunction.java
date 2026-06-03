@@ -65,5 +65,5 @@ public class ChronotypeFunction implements SleepAnalysisFunction {
         return Chronotype.DOVE;
     }
 
-    private enum Chronotype {OWL, LARK, DOVE}
+    private enum Chronotype { OWL, LARK, DOVE }
 }
