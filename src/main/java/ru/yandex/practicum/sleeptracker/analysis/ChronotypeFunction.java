@@ -4,7 +4,6 @@ import ru.yandex.practicum.sleeptracker.SleepAnalysisFunction;
 import ru.yandex.practicum.sleeptracker.SleepAnalysisResult;
 import ru.yandex.practicum.sleeptracker.SleepingSession;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -17,7 +16,6 @@ public class ChronotypeFunction implements SleepAnalysisFunction {
     public SleepAnalysisResult apply(List<SleepingSession> sessions) {
         Map<Chronotype, Long> chronotypeCounts = sessions.stream()
                 .filter(session -> !isDaytimeSession(session))
-                .filter(session -> !isSleeplessNight(session))
                 .map(this::getChronotype)
                 .collect(Collectors.groupingBy(
                         chronotype -> chronotype,
@@ -44,40 +42,26 @@ public class ChronotypeFunction implements SleepAnalysisFunction {
         int startHour = session.getStart().getHour();
         int endHour = session.getEnd().getHour();
         long durationMinutes = session.getDurationMinutes();
-        
-        boolean isShort = durationMinutes < 240;
+
+        // Дневной сон: короткий (менее 6 часов) и происходит днём
+        boolean isShort = durationMinutes < 360;
         boolean isDayTime = startHour >= 10 && startHour <= 16;
         boolean isNotOvernight = startHour < endHour;
 
         return isShort && isDayTime && isNotOvernight;
     }
 
-    private boolean isSleeplessNight(SleepingSession session) {
-        LocalDateTime nightStart = session.getStart().toLocalDate().atStartOfDay();
-        LocalDateTime nightEnd = nightStart.plusHours(6);
-        return session.getEnd().isBefore(nightStart) || session.getStart().isAfter(nightEnd);
-    }
-
     private Chronotype getChronotype(SleepingSession session) {
         int startHour = session.getStart().getHour();
         int endHour = session.getEnd().getHour();
 
-        int adjustedEndHour = endHour;
-        if (endHour < startHour) {
-            adjustedEndHour = endHour + 24;
-        }
-
-        boolean isOwlStart = startHour >= 23 || startHour <= 5;
-        boolean isOwlEnd = adjustedEndHour >= 9;
-
-        if (isOwlStart && isOwlEnd) {
+        // Сова: засыпание после 23:00 И пробуждение после 9:00
+        if (startHour >= 23 && endHour >= 9) {
             return Chronotype.OWL;
         }
 
-        boolean isLarkStart = startHour <= 22;
-        boolean isLarkEnd = endHour <= 7;
-
-        if (isLarkStart && isLarkEnd) {
+        // Жаворонок: засыпание до 22:00 И пробуждение до 7:00
+        if (startHour <= 22 && endHour <= 7) {
             return Chronotype.LARK;
         }
 

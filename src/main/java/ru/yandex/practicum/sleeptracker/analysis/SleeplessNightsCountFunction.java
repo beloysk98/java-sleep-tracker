@@ -20,37 +20,45 @@ public class SleeplessNightsCountFunction implements SleepAnalysisFunction {
         LocalDateTime globalStart = sessions.get(0).getStart();
         LocalDateTime globalEnd = sessions.get(sessions.size() - 1).getEnd();
 
-        // Начинаем проверку с даты первой сессии
         LocalDate startDate = globalStart.toLocalDate();
         LocalDate endDate = globalEnd.toLocalDate();
 
-        long totalNights = ChronoUnit.DAYS.between(startDate, endDate);
+        LocalDate firstNightDate = startDate;
+        if (globalStart.getHour() >= 12) {
+            firstNightDate = startDate.plusDays(1);
+        }
+
+        LocalDate lastNightDate = endDate;
+        if (globalEnd.getHour() < 6) {
+            lastNightDate = endDate.minusDays(1);
+        }
+
+        long totalNights = ChronoUnit.DAYS.between(firstNightDate, lastNightDate) + 1;
+
+        if (totalNights <= 0) {
+            return new SleepAnalysisResult("Бессонные ночи", 0L);
+        }
+
+        // Создаем final переменную для использования в лямбде
+        final List<SleepingSession> finalSessions = sessions;
+        final LocalDate finalFirstNightDate = firstNightDate;
 
         long nightsWithSleep = LongStream.range(0, totalNights)
-                .mapToObj(i -> startDate.plusDays(i))
-                .filter(nightDate -> hasSleepOnNight(nightDate, sessions))
+                .mapToObj(i -> finalFirstNightDate.plusDays(i))
+                .map(nightDate -> checkNightSleep(nightDate, finalSessions))
+                .filter(hasSleep -> hasSleep)
                 .count();
 
         long sleeplessNights = totalNights - nightsWithSleep;
         return new SleepAnalysisResult("Бессонные ночи", sleeplessNights);
     }
 
-    private boolean hasSleepOnNight(LocalDate nightDate, List<SleepingSession> sessions) {
+    private boolean checkNightSleep(LocalDate nightDate, List<SleepingSession> sessions) {
         LocalDateTime nightStart = nightDate.atStartOfDay();
         LocalDateTime nightEnd = nightStart.plusHours(6);
 
         return sessions.stream().anyMatch(session ->
-                isSessionOverlapsNight(session, nightStart, nightEnd)
+                session.getEnd().isAfter(nightStart) && session.getStart().isBefore(nightEnd)
         );
-    }
-
-    private boolean isSessionOverlapsNight(SleepingSession session, LocalDateTime nightStart, LocalDateTime nightEnd) {
-        LocalDateTime sessionStart = session.getStart();
-        LocalDateTime sessionEnd = session.getEnd();
-
-        boolean startsBeforeNightEnd = sessionStart.isBefore(nightEnd);
-        boolean endsAfterNightStart = sessionEnd.isAfter(nightStart);
-
-        return startsBeforeNightEnd && endsAfterNightStart;
     }
 }
