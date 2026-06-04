@@ -4,6 +4,7 @@ import ru.yandex.practicum.sleeptracker.SleepAnalysisFunction;
 import ru.yandex.practicum.sleeptracker.SleepAnalysisResult;
 import ru.yandex.practicum.sleeptracker.SleepingSession;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -19,16 +20,30 @@ public class SleeplessNightsCountFunction implements SleepAnalysisFunction {
         LocalDateTime globalStart = sessions.get(0).getStart();
         LocalDateTime globalEnd = sessions.get(sessions.size() - 1).getEnd();
 
-        long totalNights = ChronoUnit.DAYS.between(
-                globalStart.toLocalDate(), globalEnd.toLocalDate()
-        );
+        // Получаем первую дату, которую нужно проверить
+        LocalDate firstNightDate = globalStart.toLocalDate();
+
+        // Если сессия началась после 12:00, ночь относится к следующему дню
+        if (globalStart.getHour() >= 12) {
+            firstNightDate = firstNightDate.plusDays(1);
+        }
+
+        long totalNights = ChronoUnit.DAYS.between(firstNightDate, globalEnd.toLocalDate());
+
+        if (totalNights <= 0) {
+            return new SleepAnalysisResult("Бессонные ночи", 0L);
+        }
+
+        // Создаём final переменную для использования в лямбде
+        final List<SleepingSession> finalSessions = sessions;
+        final LocalDate finalFirstNightDate = firstNightDate;
 
         long nightsWithSleep = LongStream.range(0, totalNights)
-                .mapToObj(i -> globalStart.toLocalDate().plusDays(i))
-                .filter(date -> {
-                    LocalDateTime nightStart = date.atStartOfDay();
+                .mapToObj(i -> finalFirstNightDate.plusDays(i))
+                .filter(nightDate -> {
+                    LocalDateTime nightStart = nightDate.atStartOfDay();
                     LocalDateTime nightEnd = nightStart.plusHours(6);
-                    return sessions.stream().anyMatch(session ->
+                    return finalSessions.stream().anyMatch(session ->
                             session.getEnd().isAfter(nightStart) && session.getStart().isBefore(nightEnd)
                     );
                 })
