@@ -43,7 +43,7 @@ public class SleeplessNightsCountFunctionTest {
         );
         SleeplessNightsCountFunction func = new SleeplessNightsCountFunction();
         SleepAnalysisResult result = func.apply(sessions);
-        assertEquals(1L, result.getValue());
+        assertEquals(1L, result.getValue()); // Ожидаем 1 бессонную ночь
     }
 
     @Test
@@ -62,6 +62,8 @@ public class SleeplessNightsCountFunctionTest {
         );
         SleeplessNightsCountFunction func = new SleeplessNightsCountFunction();
         SleepAnalysisResult result = func.apply(sessions);
+        // Ночь 1-2 октября: есть сон
+        // Ночь 2-3 октября: нет сна (бессонная)
         assertEquals(1L, result.getValue());
     }
 }

@@ -44,8 +44,7 @@ public class ChronotypeFunction implements SleepAnalysisFunction {
         int startHour = session.getStart().getHour();
         int endHour = session.getEnd().getHour();
         long durationMinutes = session.getDurationMinutes();
-
-        // Дневной сон: короткий (менее 4 часов) и не пересекает полночь
+        
         boolean isShort = durationMinutes < 240;
         boolean isDayTime = startHour >= 10 && startHour <= 16;
         boolean isNotOvernight = startHour < endHour;
@@ -63,22 +62,22 @@ public class ChronotypeFunction implements SleepAnalysisFunction {
         int startHour = session.getStart().getHour();
         int endHour = session.getEnd().getHour();
 
-        // Корректируем для сессий, пересекающих полночь
-        int actualEndHour = endHour;
+        int adjustedEndHour = endHour;
         if (endHour < startHour) {
-            actualEndHour = endHour + 24;
+            adjustedEndHour = endHour + 24;
         }
 
-        // Сова: засыпание после 23:00 ИЛИ после полуночи, пробуждение после 9:00
-        boolean isOwlStart = startHour >= 23 || startHour < 6;
-        boolean isOwlEnd = actualEndHour >= 9;
+        boolean isOwlStart = startHour >= 23 || startHour <= 5;
+        boolean isOwlEnd = adjustedEndHour >= 9;
 
         if (isOwlStart && isOwlEnd) {
             return Chronotype.OWL;
         }
 
-        // Жаворонок: засыпание до 22:00, пробуждение до 7:00
-        if (startHour <= 22 && endHour <= 7) {
+        boolean isLarkStart = startHour <= 22;
+        boolean isLarkEnd = endHour <= 7;
+
+        if (isLarkStart && isLarkEnd) {
             return Chronotype.LARK;
         }
 
