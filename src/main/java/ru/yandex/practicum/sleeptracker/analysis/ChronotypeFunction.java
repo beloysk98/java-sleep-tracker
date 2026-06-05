@@ -12,6 +12,14 @@ public class ChronotypeFunction implements SleepAnalysisFunction {
 
     private enum Chronotype { OWL, LARK, DOVE }
 
+    private static final int OWL_START_LIMIT = 23;
+    private static final int OWL_END_LIMIT = 9;
+    private static final int LARK_START_LIMIT = 22;
+    private static final int LARK_END_LIMIT = 7;
+    private static final int DAY_START_MIN = 10;
+    private static final int DAY_START_MAX = 16;
+    private static final int DAY_DURATION_MAX = 360;
+
     @Override
     public SleepAnalysisResult apply(List<SleepingSession> sessions) {
         Map<Chronotype, Long> chronotypeCounts = sessions.stream()
@@ -44,8 +52,8 @@ public class ChronotypeFunction implements SleepAnalysisFunction {
         long durationMinutes = session.getDurationMinutes();
 
         // Дневной сон: короткий (менее 6 часов) и происходит днём
-        boolean isShort = durationMinutes < 360;
-        boolean isDayTime = startHour >= 10 && startHour <= 16;
+        boolean isShort = durationMinutes < DAY_DURATION_MAX;
+        boolean isDayTime = startHour >= DAY_START_MIN && startHour <= DAY_START_MAX;
         boolean isNotOvernight = startHour < endHour;
 
         return isShort && isDayTime && isNotOvernight;
@@ -56,12 +64,12 @@ public class ChronotypeFunction implements SleepAnalysisFunction {
         int endHour = session.getEnd().getHour();
 
         // Сова: засыпание после 23:00 И пробуждение после 9:00
-        if (startHour >= 23 && endHour >= 9) {
+        if (startHour >= OWL_START_LIMIT && endHour >= OWL_END_LIMIT) {
             return Chronotype.OWL;
         }
 
         // Жаворонок: засыпание до 22:00 И пробуждение до 7:00
-        if (startHour <= 22 && endHour <= 7) {
+        if (startHour <= LARK_START_LIMIT && endHour <= LARK_END_LIMIT) {
             return Chronotype.LARK;
         }
 
